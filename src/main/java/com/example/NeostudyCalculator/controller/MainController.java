@@ -14,6 +14,8 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -27,7 +29,6 @@ public class MainController {
     public String greeting(Model model) {
         return "index";
     }
-
 
     @GetMapping("/calculate")
     public String calcul(@RequestParam String salary, @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateStart,
@@ -50,7 +51,7 @@ public class MainController {
         Double sal = Double.parseDouble(salary);
         Double counted = (sal / 365.0) * totalDays;
 
-        model.addAttribute("counted", counted);
+        model.addAttribute("counted", round(counted,2));
         return "calculated";
     }
 
@@ -59,41 +60,22 @@ public class MainController {
         try {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse("src/main/resources/static/calendar2024.xml");
-
+            Document doc = dBuilder.parse("src/main/resources/static/xml/calendar2024.xml");
             doc.getDocumentElement().normalize();
-
-            System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-
-            NodeList zglvList = doc.getElementsByTagName("ZGLV");
-            Element zglvElement = (Element) zglvList.item(0);
-            System.out.println("Type: " + zglvElement.getElementsByTagName("TYPE").item(0).getTextContent());
-            System.out.println("Version: " + zglvElement.getElementsByTagName("VERSION").item(0).getTextContent());
-            System.out.println("Date: " + zglvElement.getElementsByTagName("DATE").item(0).getTextContent());
-            System.out.println("Year: " + zglvElement.getElementsByTagName("YEAR").item(0).getTextContent());
-
             NodeList zapList = doc.getElementsByTagName("ZAP");
             for (int temp = 0; temp < zapList.getLength(); temp++) {
-
                 Element zapElement = (Element) zapList.item(temp);
-                //System.out.println("Date: " + zapElement.getElementsByTagName("DATE").item(0).getTextContent());
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 Date date = sdf.parse(zapElement.getElementsByTagName("DATE").item(0).getTextContent());
-
-                //System.out.println("Workday: " + zapElement.getElementsByTagName("WORKDAY").item(0).getTextContent());
                 Integer wday = Integer.parseInt(zapElement.getElementsByTagName("WORKDAY").item(0).getTextContent());
                 boolean ifWorkday = wday != 0;
-
-                //System.out.println("Day Type: " + zapElement.getElementsByTagName("DAY_TYPE").item(0).getTextContent());
                 try {
-                    //System.out.println("Reason: " + zapElement.getElementsByTagName("REASON").item(0).getTextContent());
+
                     days.add(new Day(date, ifWorkday, zapElement.getElementsByTagName("DAY_TYPE").item(0).getTextContent(), zapElement.getElementsByTagName("REASON").item(0).getTextContent()));
                 } catch (java.lang.NullPointerException exc) {
-                    //System.out.println("Reason: ");
+
                     days.add(new Day(date, ifWorkday, zapElement.getElementsByTagName("DAY_TYPE").item(0).getTextContent(), ""));
                 }
-
-                //System.out.println("-----------------------");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -109,5 +91,13 @@ public class MainController {
             }
         }
         return selectedDays;
+    }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = BigDecimal.valueOf(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }

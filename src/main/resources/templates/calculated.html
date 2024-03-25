@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
     <title>Рассчёт</title>
 </head>
+<header th:insert="~{blocks/header :: header}"></header>
 <body>
-    <h1 th:text="${counted}"></h1>
+    <h1 th:text="'Сумма отпускных составит ' + ${counted} + ' рублей'"></h1>
 </body>
 </html>
